@@ -1,0 +1,233 @@
+openapi: 3.0.0
+info: 
+  title: Калькулятор
+  version: 1.0.0
+servers:
+  - url: http://localhost:8080/
+    description: Dev server
+paths:
+  /operations:
+    post:
+      summary: Метод создания нового вычисления
+      tags:
+        - operations
+      operationId: createOperation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/operation_request"
+      responses:
+        '200':
+          description: Успешно созданный объект
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/operation_response"
+        'default':
+          description: Ошибка
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/error"
+  
+    get:
+      summary: Метод получения информации о всех вычислениях
+      tags:
+        - operations
+      operationId: getAllOperations
+      responses:
+        '200':
+          description: Успешный ответ со списком
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/operations"
+        'default':
+          description: Ошибка
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/error"
+                
+  /operations/{id}:
+    get:
+      summary: Метод получения информации о вычислении по идентификатору
+      tags:
+        - operations
+      operationId: getOperationById
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Идентификатор операции
+          schema:
+            type: integer
+            example: 1
+      responses:
+        '200':
+          description: Успешный ответ с операцией
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/operation_response"
+        'default':
+          description: Ошибка
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/error"
+                
+    put:
+      summary: Метод обновления вычисления по идентификатору
+      tags:
+        - operations
+      operationId: updateOperationById
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Идентификатор операции
+          schema:
+            type: integer
+            example: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/requestBody"
+      responses:
+          '200':
+            description: Обновленный объект
+            content:
+              application/json:
+                schema:
+                  $ref: "#/components/schemas/operation_response"
+          'default':
+            description: Ошибка
+            content:
+              application/json:
+                schema:
+                  $ref: "#/components/schemas/error"
+                
+    delete:
+      summary: Метод удаления вычисления по идентификатору
+      tags:
+        - operations
+      operationId: deleteOperationById
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Идентификатор операции
+          schema:
+            type: integer
+            example: 1
+      responses:
+        '200':
+          description: Успешный ответ о удалении с содержимым, которое было удалено
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/operation_response"
+        'default':
+          description: Ошибка
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/error"
+                
+  /statistics:
+    get:
+      summary: Получение количества обращений
+      description: Возвращает количество обращений в API.
+      responses:
+        200:
+          description: Успешный ответ. Возвращается количество обращений.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total_сount:
+                    type: integer
+                    description: Общее количество обращений.
+              
+components:
+  schemas:
+    operation_response:
+      type: object
+      required:
+        - id
+        - oper_1
+        - oper_2
+        - operation
+        - result
+      properties:
+        id:
+          type: integer
+          example: 1
+        comment:
+          type: string
+          example: Сложение
+        dt_operation:
+          type: string
+          example: 2023-01-01 00:00:01
+        oper_1:
+          type: integer
+          example: 1
+        oper_2:
+          type: integer
+          example: 2
+        operation:
+          type: string
+          example: +
+        result:
+          type: integer
+          example: 3
+    operations:
+      type: array
+      items:
+        $ref: "#/components/schemas/operation_response"
+    error:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: integer
+        message:
+          type: string
+          
+    operation_request:
+      type: object
+      required:
+        - oper_1
+        - oper_2
+        - operation
+      properties:
+        comment:
+          type: string
+          example: Сложение
+        oper_1:
+          type: integer
+          example: 1
+        oper_2:
+          type: integer
+          example: 2
+        operation:
+          type: string
+          example: +
+      
+    requestBody:
+      type: object
+      properties:
+        comment:
+          type: string
+          example: Сложение
+        
+          
+          
