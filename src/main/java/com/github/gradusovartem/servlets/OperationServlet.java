@@ -24,11 +24,7 @@ public class OperationServlet extends HttpServlet {
 
     @Override
     public void destroy() {
-        try {
-            ConnectionPool.shutdown();
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
+        OperationService.shutdown();
         super.destroy();
     }
 

@@ -127,6 +127,10 @@ public class OperationService implements Service {
         return result;
     }
 
+    public static void shutdown() {
+        OperationDaoDB.shutdown();
+    }
+
     /**
      * Метод реализует создание уникального id
      * @return возвращает объект Integer

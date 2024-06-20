@@ -306,4 +306,12 @@ public class OperationDaoDB implements Dao {
         } */
         return operation;
     }
+
+    public static void shutdown() {
+        try {
+            ConnectionPool.shutdown();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
 }
