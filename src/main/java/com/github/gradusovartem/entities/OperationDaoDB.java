@@ -25,15 +25,17 @@ public class OperationDaoDB implements Dao {
     private static String updateStatement = "UPDATE operations1 SET comment = ? WHERE id = ?";
     private static String deleteStatement = "DELETE FROM operations1 WHERE id = ?";
     ObjectMapper objectMapper = SingleObjectMapper.getInstance();
-    ConnectionPool pool;
+    // ConnectionPool pool;
+    C3p0DataSource pool;
 
-    {
+    /* {
         try {
-            pool = ConnectionPool.create(url);
+            // pool = ConnectionPool.create(url);
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
-    }
+    } */
+
 
     /**
      * Метод реализует подключение к базе данных и получение объекта по id
@@ -42,13 +44,19 @@ public class OperationDaoDB implements Dao {
      */
     @Override
     public Operation get(int id) {
-        Connection conn = pool.getConnection();
+        Connection conn = null;
+        /* try (){
+            conn = pool.getConnection();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        } */
 
         /* if(1 == 1){
             System.out.println("TEST");
             throw new RuntimeException("TEST");
         } */
         try {
+            conn = pool.getConnection();
             conn.setAutoCommit(false);
             PreparedStatement stmt = conn.prepareStatement(getStatement);
             stmt.setInt(1, id);
@@ -69,7 +77,7 @@ public class OperationDaoDB implements Dao {
             // rs.close();
             // stmt.close();
             // System.out.println(json.toString());
-            System.out.println(pool.getSize());
+            // System.out.println(pool.getSize());
             // Operation operation = objectMapper.readValue(json.toString(), Operation.class);
             conn.commit();
             return operation;
@@ -81,7 +89,7 @@ public class OperationDaoDB implements Dao {
             }
             e.printStackTrace();
         } finally {
-            pool.releaseConnection(conn);
+            pool.close(conn);
         }
 
         return null;
@@ -93,9 +101,10 @@ public class OperationDaoDB implements Dao {
      */
     @Override
     public Collection getAll() {
-        Connection conn = pool.getConnection();
+        Connection conn = null;
         int count = 0;
         try {
+            conn = pool.getConnection();
             conn.setAutoCommit(false);
 
             PreparedStatement stmt = conn.prepareStatement("SELECT COUNT(*) FROM operations1");
@@ -133,7 +142,7 @@ public class OperationDaoDB implements Dao {
             }
             e.printStackTrace();
         } finally {
-            pool.releaseConnection(conn);
+            pool.close(conn);
         }
         return null;
     }
@@ -146,9 +155,10 @@ public class OperationDaoDB implements Dao {
     @Override
     public boolean add(Operation t) {
         PreparedStatement stmt = null;
-        Connection conn = pool.getConnection();
+        Connection conn = null;
         ResultSet rs = null;
         try {
+            conn = pool.getConnection();
             conn.setAutoCommit(false);
             stmt = conn.prepareStatement(addStatement, PreparedStatement.RETURN_GENERATED_KEYS);
             // stmt.setInt(1, t.getId());
@@ -184,7 +194,7 @@ public class OperationDaoDB implements Dao {
             }
             return false;
         } finally {
-            pool.releaseConnection(conn);
+            pool.close(conn);
         }
     }
 
@@ -196,8 +206,9 @@ public class OperationDaoDB implements Dao {
      */
     @Override
     public boolean update(int id, String comment) {
-        Connection conn = pool.getConnection();
+        Connection conn = null;
         try {
+            conn = pool.getConnection();
             conn.setAutoCommit(false);
             PreparedStatement stmt = conn.prepareStatement(updateStatement);
             stmt.setString(1, comment);
@@ -217,7 +228,7 @@ public class OperationDaoDB implements Dao {
             }
             return false;
         } finally {
-            pool.releaseConnection(conn);
+            pool.close(conn);
         }
     }
 
@@ -228,8 +239,9 @@ public class OperationDaoDB implements Dao {
      */
     @Override
     public boolean delete(int id) {
-        Connection conn = pool.getConnection();
+        Connection conn = null;
         try {
+            conn = pool.getConnection();
             conn.setAutoCommit(false);
             PreparedStatement stmt = conn.prepareStatement(deleteStatement);
             stmt.setInt(1, id);
@@ -248,7 +260,7 @@ public class OperationDaoDB implements Dao {
             }
             return false;
         } finally {
-            pool.releaseConnection(conn);
+            pool.close(conn);
         }
     }
 
@@ -308,10 +320,10 @@ public class OperationDaoDB implements Dao {
     }
 
     public static void shutdown() {
-        try {
+        /* try {
             ConnectionPool.shutdown();
         } catch (SQLException e) {
             throw new RuntimeException(e);
-        }
+        } */
     }
 }
