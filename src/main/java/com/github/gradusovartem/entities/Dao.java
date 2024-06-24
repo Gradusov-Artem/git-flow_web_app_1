@@ -27,7 +27,7 @@ public interface Dao<T> {
      * @param t - параметр Operation
      * @return возвращает булево значение
      */
-    boolean add(Operation t);
+    Object add(Operation t);
 
     /**
      * Метод отвечает за обновление объекта

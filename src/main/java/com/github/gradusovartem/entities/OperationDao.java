@@ -39,7 +39,7 @@ public class OperationDao implements Dao<Operation>{
      * @return возвращает булево значение
      */
     @Override
-    public boolean add(Operation operation) {
+    public Object add(Operation operation) {
         addOperation(operation);
         return true;
     }

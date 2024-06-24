@@ -58,8 +58,11 @@ public class OperationService implements Service {
         // operation.setId(id_);
         operation.setResult(result);
         Operation currentOperation = new Operation(operation);
-        if (operationDao.add(currentOperation)) {
-            currentOperation = operationDao.get(currentOperation.getId());
+        OperationDaoDB.Return r = (OperationDaoDB.Return) operationDao.add(currentOperation);
+        if (r != null) {
+            Operation operationFromOperationDao = r.getOperation();
+            operationFromOperationDao.setId(r.getId());
+            currentOperation = operationDao.get(r.getId());
             return currentOperation;
         }
         return null;

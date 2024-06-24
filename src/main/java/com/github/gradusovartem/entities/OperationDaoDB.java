@@ -18,12 +18,34 @@ import java.util.Collection;
  * Класс реализует слой Dao для доступа к базе данных
  */
 public class OperationDaoDB implements Dao {
+    public class Return{
+        private Operation operation;
+        private Integer id;
+
+        public void setOperation(Operation operation) {
+            this.operation = operation;
+        }
+
+        public void setId(Integer id) {
+            this.id = id;
+        }
+
+        public Operation getOperation() {
+            return operation;
+        }
+
+        public Integer getId() {
+            return id;
+        }
+    }
+
     private static final String url = "jdbc:postgresql://localhost:5432/OperationDB?user=postgres&password=7719150Artik";
     private static String getStatement = "SELECT * FROM operations1 WHERE id = ?";
     private static String getAllStatement = "SELECT * FROM operations1";
     private static String addStatement = "INSERT INTO operations1(comment, dt_operation, oper_1, oper_2, operation, result) VALUES(?, ?, ?, ?, ?, ?)";
     private static String updateStatement = "UPDATE operations1 SET comment = ? WHERE id = ?";
     private static String deleteStatement = "DELETE FROM operations1 WHERE id = ?";
+    private static String getCountStatememt = "SELECT COUNT(*) FROM operations1";
     ObjectMapper objectMapper = SingleObjectMapper.getInstance();
     // ConnectionPool pool;
     C3p0DataSource pool;
@@ -44,24 +66,15 @@ public class OperationDaoDB implements Dao {
      */
     @Override
     public Operation get(int id) {
+        PreparedStatement stmt = null;
         Connection conn = null;
-        /* try (){
-            conn = pool.getConnection();
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        } */
-
-        /* if(1 == 1){
-            System.out.println("TEST");
-            throw new RuntimeException("TEST");
-        } */
+        ResultSet rs = null;
         try {
             conn = pool.getConnection();
             conn.setAutoCommit(false);
-            PreparedStatement stmt = conn.prepareStatement(getStatement);
+            stmt = conn.prepareStatement(getStatement);
             stmt.setInt(1, id);
-            ResultSet rs = stmt.executeQuery();
-            JSONObject json = null;
+            rs = stmt.executeQuery();
             Operation operation = null;
 
             if (rs.next()) {
@@ -69,16 +82,9 @@ public class OperationDaoDB implements Dao {
                 operation = convert(rs);
             }
 
-            if(rs != null)
-                rs.close();
             if(stmt != null)
                 stmt.close();
 
-            // rs.close();
-            // stmt.close();
-            // System.out.println(json.toString());
-            // System.out.println(pool.getSize());
-            // Operation operation = objectMapper.readValue(json.toString(), Operation.class);
             conn.commit();
             return operation;
         } catch (SQLException | JSONException | NullPointerException e) {
@@ -101,14 +107,16 @@ public class OperationDaoDB implements Dao {
      */
     @Override
     public Collection getAll() {
+        PreparedStatement stmt = null;
         Connection conn = null;
+        ResultSet rs = null;
         int count = 0;
         try {
             conn = pool.getConnection();
             conn.setAutoCommit(false);
 
-            PreparedStatement stmt = conn.prepareStatement("SELECT COUNT(*) FROM operations1");
-            ResultSet rs = stmt.executeQuery();
+            stmt = conn.prepareStatement(getCountStatememt);
+            rs = stmt.executeQuery();
             if (rs.next()) {
                 count = rs.getInt(1);
             }
@@ -116,23 +124,16 @@ public class OperationDaoDB implements Dao {
             stmt = conn.prepareStatement(getAllStatement);
             rs = stmt.executeQuery();
             conn.commit();
-            JSONArray jsonArray = new JSONArray();
             Operation[] operations = new Operation[count];
             int i = 0;
 
             while (rs.next()) {
-                // JSONObject json = convert(rs);
-                // jsonArray.put(json);
                 operations[i] = convert(rs);
                 i++;
             }
 
-            if(rs != null)
-                rs.close();
             if(stmt != null)
                 stmt.close();
-            // System.out.println(jsonArray.toString());
-            // Operation[] operation = objectMapper.readValue(jsonArray.toString(), Operation[].class);
             return Arrays.asList(operations);
         } catch (SQLException | JSONException e) {
             try {
@@ -153,10 +154,11 @@ public class OperationDaoDB implements Dao {
      * @return возвращает булево значение
      */
     @Override
-    public boolean add(Operation t) {
+    public Object add(Operation t) {
         PreparedStatement stmt = null;
         Connection conn = null;
         ResultSet rs = null;
+        Return r = new Return();
         try {
             conn = pool.getConnection();
             conn.setAutoCommit(false);
@@ -175,17 +177,19 @@ public class OperationDaoDB implements Dao {
             int id = 0;
             if (rs.next()) {
                 id = rs.getInt(1);
-                System.out.println("ID последней вставленной записи: " + id);
+                // System.out.println("ID последней вставленной записи: " + id);
             }
             if (id == 0) {
                 throw new IllegalArgumentException("CAN'T GET GENERATED KEYS");
             }
-            t.setId(id);
-            if(rs != null)
-                rs.close();
+            r.setOperation(t);
+            r.setId(id);
+            // t.setId(id);
+            /* if(rs != null)
+                rs.close(); */
             if(stmt != null)
                 stmt.close();
-            return true;
+            return r;
         } catch (SQLException e) {
             try {
                 conn.rollback();
@@ -206,11 +210,12 @@ public class OperationDaoDB implements Dao {
      */
     @Override
     public boolean update(int id, String comment) {
+        PreparedStatement stmt = null;
         Connection conn = null;
         try {
             conn = pool.getConnection();
             conn.setAutoCommit(false);
-            PreparedStatement stmt = conn.prepareStatement(updateStatement);
+            stmt = conn.prepareStatement(updateStatement);
             stmt.setString(1, comment);
             stmt.setInt(2, id);
             stmt.executeUpdate();
@@ -239,11 +244,13 @@ public class OperationDaoDB implements Dao {
      */
     @Override
     public boolean delete(int id) {
+        PreparedStatement stmt = null;
         Connection conn = null;
+        ResultSet rs = null;
         try {
             conn = pool.getConnection();
             conn.setAutoCommit(false);
-            PreparedStatement stmt = conn.prepareStatement(deleteStatement);
+            stmt = conn.prepareStatement(deleteStatement);
             stmt.setInt(1, id);
             stmt.executeUpdate();
             conn.commit();
@@ -265,34 +272,13 @@ public class OperationDaoDB implements Dao {
     }
 
     /**
-     * Метод преобразует полученные данные в формат JSON
+     * Метод преобразует полученные данные в объект класса Operation
      * @param rs - ResultSet полученный из БД
-     * @return возвращает объект класса JSONObject
+     * @return возвращает объект класса Operation
      * @throws SQLException
      * @throws JSONException
      */
-    /* public static JSONObject convert(ResultSet rs) throws SQLException, JSONException {
-        ResultSetMetaData rsmd = rs.getMetaData();
-        int numColumns = rsmd.getColumnCount();
-        JSONObject obj = new JSONObject();
-
-        for (int i = 1; i < numColumns + 1; i++) {
-            String column_name = rsmd.getColumnName(i);
-
-            if (rsmd.getColumnType(i) == java.sql.Types.INTEGER) {
-                obj.put(column_name, rs.getInt(column_name));
-            } else if (rsmd.getColumnType(i) == java.sql.Types.VARCHAR || rsmd.getColumnType(i) == java.sql.Types.CHAR) {
-                obj.put(column_name, rs.getString(column_name));
-            } else {
-                obj.put(column_name, LocalDateTime.parse(String.valueOf(rs.getObject(column_name)).replaceAll("\\s", "T")));
-            }
-        }
-        return obj;
-    } */
-
     public static Operation convert(ResultSet rs) throws SQLException, JSONException {
-        ResultSetMetaData rsmd = rs.getMetaData();
-        int numColumns = rsmd.getColumnCount();
         Operation operation = new Operation();
         operation.setId(rs.getInt("id"));
         operation.setComment(rs.getString("comment"));
@@ -302,20 +288,6 @@ public class OperationDaoDB implements Dao {
         operation.setOperation(rs.getString("operation"));
         operation.setResult(rs.getInt("result"));
 
-        /* for (int i = 1; i < numColumns + 1; i++) {
-            String column_name = rsmd.getColumnName(i);
-
-            if (rsmd.getColumnType(i) == java.sql.Types.INTEGER) {
-                // obj.put(column_name, rs.getInt(column_name));
-                operation.setMethod(i, rs.getInt(column_name));
-            } else if (rsmd.getColumnType(i) == java.sql.Types.VARCHAR || rsmd.getColumnType(i) == java.sql.Types.CHAR) {
-                // obj.put(column_name, rs.getString(column_name));
-                operation.setMethod(i, rs.getString(column_name));
-            } else {
-                // obj.put(column_name, LocalDateTime.parse(String.valueOf(rs.getObject(column_name)).replaceAll("\\s", "T")));
-                operation.setMethod(i, LocalDateTime.parse(String.valueOf(rs.getObject(column_name)).replaceAll("\\s", "T")));
-            }
-        } */
         return operation;
     }
 
